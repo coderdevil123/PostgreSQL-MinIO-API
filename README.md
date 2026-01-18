@@ -1,177 +1,75 @@
-# Supabase CLI
+# PostgreSQL + MinIO (Self-Hosted Backend Foundation)
 
-[![Coverage Status](https://coveralls.io/repos/github/supabase/cli/badge.svg?branch=main)](https://coveralls.io/github/supabase/cli?branch=main) [![Bitbucket Pipelines](https://img.shields.io/bitbucket/pipelines/supabase-cli/setup-cli/master?style=flat-square&label=Bitbucket%20Canary)](https://bitbucket.org/supabase-cli/setup-cli/pipelines) [![Gitlab Pipeline Status](https://img.shields.io/gitlab/pipeline-status/sweatybridge%2Fsetup-cli?label=Gitlab%20Canary)
-](https://gitlab.com/sweatybridge/setup-cli/-/pipelines)
+This repository contains a **local-first, self-hosted backend setup** using:
 
-[Supabase](https://supabase.io) is an open source Firebase alternative. We're building the features of Firebase using enterprise-grade open source tools.
+- **PostgreSQL** – relational database
+- **MinIO** – S3-compatible object storage
+- **Docker Compose** – container orchestration
 
-This repository contains all the functionality for Supabase CLI.
+This setup is designed as a **replacement for Supabase Cloud**, while keeping:
+- Full data ownership
+- Minimal infrastructure complexity
+- Easy migration & rollback
+- Clear separation of concerns
 
-- [x] Running Supabase locally
-- [x] Managing database migrations
-- [x] Creating and deploying Supabase Functions
-- [x] Generating types directly from your database schema
-- [x] Making authenticated HTTP requests to [Management API](https://supabase.com/docs/reference/api/introduction)
+---
 
-## Getting started
+## 🧠 Why This Setup?
 
-### Install the CLI
+We were previously using **Supabase Cloud** primarily for:
+- PostgreSQL (database)
+- Supabase Storage (images/files)
 
-Available via [NPM](https://www.npmjs.com) as dev dependency. To install:
+We are **not using**:
+- Supabase Auth
+- Supabase Realtime subscriptions
 
-```bash
-npm i supabase --save-dev
-```
+Self-hosting the full Supabase stack introduces unnecessary operational overhead.
+Instead, this setup runs **only what we actually need**.
 
-When installing with yarn 4, you need to disable experimental fetch with the following nodejs config.
+### Benefits
+- No vendor lock-in
+- Fewer services to maintain
+- Easier security auditing
+- Better control over data & backups
+- Same PostgreSQL compatibility as Supabase
 
-```
-NODE_OPTIONS=--no-experimental-fetch yarn add supabase
-```
+---
 
-> **Note**
-For Bun versions below v1.0.17, you must add `supabase` as a [trusted dependency](https://bun.sh/guides/install/trusted) before running `bun add -D supabase`.
+## 🏗 Architecture Overview
 
-<details>
-  <summary><b>macOS</b></summary>
 
-  Available via [Homebrew](https://brew.sh). To install:
+- PostgreSQL stores structured data
+- MinIO stores images/files
+- Database stores only file URLs (not binaries)
 
-  ```sh
-  brew install supabase/tap/supabase
-  ```
+---
 
-  To install the beta release channel:
-  
-  ```sh
-  brew install supabase/tap/supabase-beta
-  brew link --overwrite supabase-beta
-  ```
-  
-  To upgrade:
+## 📦 Services
 
-  ```sh
-  brew upgrade supabase
-  ```
-</details>
+### PostgreSQL
+- Image: `postgres:15`
+- Database: `pristine_db`
+- Persistent volume enabled
+- Fully compatible with Supabase PostgreSQL exports
 
-<details>
-  <summary><b>Windows</b></summary>
+### MinIO
+- S3-compatible object storage
+- Used as a replacement for Supabase Storage
+- Supports public and private buckets
+- Persistent volume enabled
 
-  Available via [Scoop](https://scoop.sh). To install:
+---
 
-  ```powershell
-  scoop bucket add supabase https://github.com/supabase/scoop-bucket.git
-  scoop install supabase
-  ```
+## 🚀 Getting Started (Local Setup)
 
-  To upgrade:
+### Prerequisites
+- Docker
+- Docker Compose
 
-  ```powershell
-  scoop update supabase
-  ```
-</details>
+---
 
-<details>
-  <summary><b>Linux</b></summary>
-
-  Available via [Homebrew](https://brew.sh) and Linux packages.
-
-  #### via Homebrew
-
-  To install:
-
-  ```sh
-  brew install supabase/tap/supabase
-  ```
-
-  To upgrade:
-
-  ```sh
-  brew upgrade supabase
-  ```
-
-  #### via Linux packages
-
-  Linux packages are provided in [Releases](https://github.com/supabase/cli/releases). To install, download the `.apk`/`.deb`/`.rpm`/`.pkg.tar.zst` file depending on your package manager and run the respective commands.
-
-  ```sh
-  sudo apk add --allow-untrusted <...>.apk
-  ```
-
-  ```sh
-  sudo dpkg -i <...>.deb
-  ```
-
-  ```sh
-  sudo rpm -i <...>.rpm
-  ```
-
-  ```sh
-  sudo pacman -U <...>.pkg.tar.zst
-  ```
-</details>
-
-<details>
-  <summary><b>Other Platforms</b></summary>
-
-  You can also install the CLI via [go modules](https://go.dev/ref/mod#go-install) without the help of package managers.
-
-  ```sh
-  go install github.com/supabase/cli@latest
-  ```
-
-  Add a symlink to the binary in `$PATH` for easier access:
-
-  ```sh
-  ln -s "$(go env GOPATH)/bin/cli" /usr/bin/supabase
-  ```
-
-  This works on other non-standard Linux distros.
-</details>
-
-<details>
-  <summary><b>Community Maintained Packages</b></summary>
-
-  Available via [pkgx](https://pkgx.sh/). Package script [here](https://github.com/pkgxdev/pantry/blob/main/projects/supabase.com/cli/package.yml).
-  To install in your working directory:
-
-  ```bash
-  pkgx install supabase
-  ```
-
-  Available via [Nixpkgs](https://nixos.org/). Package script [here](https://github.com/NixOS/nixpkgs/blob/master/pkgs/development/tools/supabase-cli/default.nix).
-</details>
-
-### Run the CLI
+### 1️⃣ Start Services
 
 ```bash
-supabase bootstrap
-```
-
-Or using npx:
-
-```bash
-npx supabase bootstrap
-```
-
-The bootstrap command will guide you through the process of setting up a Supabase project using one of the [starter](https://github.com/supabase-community/supabase-samples/blob/main/samples.json) templates.
-
-## Docs
-
-Command & config reference can be found [here](https://supabase.com/docs/reference/cli/about).
-
-## Breaking changes
-
-We follow semantic versioning for changes that directly impact CLI commands, flags, and configurations.
-
-However, due to dependencies on other service images, we cannot guarantee that schema migrations, seed.sql, and generated types will always work for the same CLI major version. If you need such guarantees, we encourage you to pin a specific version of CLI in package.json.
-
-## Developing
-
-To run from source:
-
-```sh
-# Go >= 1.22
-go run . help
-```
+docker compose up -d
